@@ -1,0 +1,3 @@
+company_identifier,reporting_year,reporting_month,revenue,expenses,customer_count,new_customers,employee_count,cash_balance
+ACME-001,2026,2,-100,950000.00,250,18,12,450000.00
+UNKNOWN,2026,2,1000,500,10,2,4,200

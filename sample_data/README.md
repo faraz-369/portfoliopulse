@@ -1,0 +1,1 @@
+All records are synthetic. The valid sample is one-company/one-period. The invalid sample demonstrates negative revenue and an unknown company identifier. Reporting periods and companies are seeded locally.

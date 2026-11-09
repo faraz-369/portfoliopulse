@@ -1,0 +1,7 @@
+# Data processing
+
+The ingestion service computes SHA-256 over uploaded bytes, returns the existing result for byte-identical retries, parses UTF-8 CSV, validates headers and rows against the reporting period's template version, resolves registered companies and periods, and writes accepted metrics plus submission/state/log records in one database transaction. Invalid rows are represented as structured `{row,column,value,rule,message}` objects. Accepted rows from a partially invalid upload remain staged under a `validation_failed` submission and are excluded from analytics. A correction creates a linked new submission; it never overwrites the original.
+
+Valid submissions move through `submitted`, `processing`, and `pending_review`. Review is recorded by an analyst or admin; an admin then approves or rejects with a reason. Only approved data is queried by analytics. When a corrected report is approved for the same company and period, its previously approved predecessor becomes `superseded`. The database's partial unique index prevents multiple simultaneously approved submissions for the same company/period.
+
+All-invalid submissions are retained as `validation_failed` and return HTTP 422 with the submission ID, counts, and structured errors; the same errors are available through report history. File-level rejections such as an oversized file, unsupported extension, or byte-identical retry do not create a new submission.

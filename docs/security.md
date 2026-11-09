@@ -1,0 +1,5 @@
+# Security controls and limitations
+
+Implemented: Argon2 password hashing, signed expiring JWTs, role dependencies, tenant-scoped record queries, PostgreSQL composite tenant foreign keys, parameterised SQLAlchemy queries, request schema validation, upload size and extension limits, no stack traces in client errors, configurable CORS and environment-based secrets. Admins configure templates, periods, companies, submitter accounts, and final report decisions; analysts can upload and review; company submitters are bound to one company; viewers cannot upload or decide reports. Company submitters can read their own unassociated failed submissions, but cannot replay or inspect another company's submission.
+
+Limitations: no refresh-token rotation, MFA, password reset workflow, rate limiting, malware scanning, external penetration test or formal security audit. Configure a strong secret and demo password before any shared deployment. This is a portfolio demonstration, not a certified production security solution.
