@@ -20,7 +20,7 @@ A standalone business-portfolio reporting platform demonstrating backend applica
 
 ## Quick start (Windows + VS Code)
 1. Install Docker Desktop and start it.
-2. Extract this ZIP and open the `portfolio-pulse` folder in VS Code.
+2. Open the project folder in VS Code.
 3. Copy `.env.example` to `.env`.
 4. In the VS Code terminal, run:
 
@@ -28,7 +28,7 @@ A standalone business-portfolio reporting platform demonstrating backend applica
 docker compose up --build
 ```
 
-The backend container waits for PostgreSQL, applies migrations and seeds demo data on startup.
+The backend container waits for PostgreSQL and applies Alembic migrations on startup. It does **not** seed demo data automatically.
 
 - API: http://localhost:8000
 - Swagger: http://localhost:8000/docs
@@ -45,7 +45,15 @@ These are local development/demo credentials only. Do not use them in production
 | Analyst | `analyst@portfoliopulse.example.com` | `ChangeMe123!` |
 | Viewer | `viewer@portfoliopulse.example.com` | `ChangeMe123!` |
 
-`docker compose up --build` applies Alembic migrations and seeds missing demo data. The email migration safely updates existing `.local` demo accounts in place, preserving their IDs, organization associations, roles, activation states and password hashes. Re-running the seed is safe and does not change existing passwords. New accounts use the `DEMO_PASSWORD` value from `.env` (default `ChangeMe123!`).
+Demo data is created only by an explicit development command. With the stack running, opt in for that one command:
+
+```powershell
+docker compose exec -e ENABLE_DEMO_SEEDING=true backend python -m scripts.seed_demo_data
+```
+
+The seed is idempotent and preserves existing passwords. It also safely updates legacy `.local` demo email addresses in place, preserving IDs, organization associations, roles, activation states and password hashes. The local demo password defaults to `ChangeMe123!`; set `DEMO_PASSWORD` in the development `.env` before seeding to choose another. Demo seeding is rejected outside development and production settings reject both demo-seeding opt-in and `DEMO_PASSWORD`.
+
+The checked-in Compose file and `.env.example` are for local development, not production deployment. Production must explicitly configure `ENVIRONMENT=production`, `SECRET_KEY` (at least 32 characters and not a development default), `DATABASE_URL` (PostgreSQL), and `CORS_ORIGINS` (comma-separated HTTPS origins). Production also rejects the local database password, SQLite URLs, demo credentials, and demo-seeding opt-in. The application validates these settings before creating the FastAPI app or database engine. Use a managed secret source and a production deployment configuration; none is provided in this project.
 
 ## Complete the reporting workflow
 1. Sign in to Streamlit as the local demo admin.
@@ -67,7 +75,7 @@ docker compose exec backend pytest -q
 docker compose exec backend pytest --cov=app --cov-report=term-missing
 docker compose exec backend ruff check .
 docker compose exec backend alembic upgrade head
-docker compose exec backend python -m scripts.seed_demo_data
+docker compose exec -e ENABLE_DEMO_SEEDING=true backend python -m scripts.seed_demo_data
 ```
 
 ### PostgreSQL integration tests
@@ -78,14 +86,17 @@ docker compose exec -e PORTFOLIOPULSE_TEST_DATABASE_URL=postgresql+psycopg://por
 ```
 
 ## Non-Docker setup
-Use Python 3.12+, install PostgreSQL, create a database, configure `DATABASE_URL` in `.env`, then:
+Use Python 3.12+, install PostgreSQL, create a database, copy `.env.example` to `.env` in the project root, and configure its `DATABASE_URL` for the local PostgreSQL instance. From the project root, copy the file to the backend working directory and run:
 ```powershell
-cd backend
+Copy-Item .env backend\.env
+Set-Location backend
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 alembic upgrade head
+$env:ENABLE_DEMO_SEEDING = "true"
 python -m scripts.seed_demo_data
+$env:ENABLE_DEMO_SEEDING = "false"
 uvicorn app.main:app --reload
 ```
 In a second terminal:
