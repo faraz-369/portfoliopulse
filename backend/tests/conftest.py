@@ -2,6 +2,8 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["SECRET_KEY"] = "test-secret-key"
+os.environ["ENVIRONMENT"] = "development"
+os.environ["ENABLE_DEMO_SEEDING"] = "false"
 
 import pytest
 from fastapi.testclient import TestClient

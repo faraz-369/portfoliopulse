@@ -1,11 +1,12 @@
-from sqlalchemy import create_engine, func, select
-from sqlalchemy.orm import sessionmaker
-
+import pytest
+from app.core.config import Settings
 from app.db.base import Base
 from app.demo_accounts import migrate_demo_account_emails
 from app.models import Organization, ReportingPeriod, User
 from app.security import hash_password, verify_password
 from scripts import seed_demo_data
+from sqlalchemy import create_engine, func, select
+from sqlalchemy.orm import sessionmaker
 
 
 def test_demo_email_migration_is_idempotent_and_preserves_user_data():
@@ -168,6 +169,15 @@ def test_seed_is_idempotent_and_preserves_existing_demo_password(monkeypatch):
         )
 
     monkeypatch.setattr(seed_demo_data, "SessionLocal", testing_session)
+    monkeypatch.setattr(
+        seed_demo_data,
+        "settings",
+        Settings(
+            _env_file=None,
+            environment="development",
+            enable_demo_seeding=True,
+        ),
+    )
     seed_demo_data.main()
     seed_demo_data.main()
 
@@ -205,3 +215,19 @@ def test_seed_is_idempotent_and_preserves_existing_demo_password(monkeypatch):
         assert seeded_periods[(2025, 4)].end_date.isoformat() == "2025-04-30"
 
     engine.dispose()
+
+
+def test_seed_command_rejects_production_before_opening_database(monkeypatch):
+    class ProductionConfig:
+        environment = "production"
+        enable_demo_seeding = False
+
+    monkeypatch.setattr(seed_demo_data, "settings", ProductionConfig())
+    monkeypatch.setattr(
+        seed_demo_data,
+        "SessionLocal",
+        lambda: pytest.fail("The seed command must stop before database access."),
+    )
+
+    with pytest.raises(RuntimeError, match="only in development"):
+        seed_demo_data.main()

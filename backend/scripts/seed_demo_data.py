@@ -11,7 +11,17 @@ from app.reporting_templates import ensure_default_template
 from app.security import hash_password
 
 
+def ensure_demo_seeding_allowed():
+    if settings.environment != "development":
+        raise RuntimeError("Demo seeding is available only in development.")
+    if not settings.enable_demo_seeding:
+        raise RuntimeError(
+            "Demo seeding is disabled. Set ENABLE_DEMO_SEEDING=true explicitly."
+        )
+
+
 def main():
+    ensure_demo_seeding_allowed()
     db = SessionLocal()
     try:
         migrate_demo_account_emails(db.connection())
