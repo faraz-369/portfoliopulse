@@ -1,4 +1,4 @@
-# PortfolioPulse.
+# PortfolioPulse.,
 
 A standalone business-portfolio reporting platform demonstrating backend application engineering with FastAPI, PostgreSQL, SQLAlchemy 2, Alembic, CSV ingestion, deterministic KPIs, JWT authentication, role-based access control, and a Streamlit client.
 
